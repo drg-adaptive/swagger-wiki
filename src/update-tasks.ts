@@ -3,6 +3,7 @@ import * as execa from "execa";
 import * as fs from "fs";
 import * as Listr from "listr";
 import * as path from "path";
+import YAML from "yaml";
 
 interface ExistingPage {
   slug: string;
@@ -10,7 +11,6 @@ interface ExistingPage {
 interface Context {
   api: AxiosInstance;
   rootDir: string;
-  prefix?: string;
   existingPages?: Array<ExistingPage>;
   files?: Array<string>;
   slugs?: Array<string>;
@@ -76,10 +76,19 @@ export const UpdateTasks = new Listr<Context>([
           title: slug,
           async task() {
             const markdownPath = path.join(ctx.rootDir, `${slug}.md`);
-            slug = (ctx.prefix ? ctx.prefix + "/" : "") + slug;
             const content = fs.readFileSync(markdownPath, {
               encoding: "utf-8"
             });
+
+            let prefix;
+
+            const { info } = YAML.parse(content);
+
+            if (info && info.version) {
+              prefix = info.version;
+            }
+
+            slug = (prefix ? prefix + "/" : "") + slug;
             const data = {
               content,
               slug

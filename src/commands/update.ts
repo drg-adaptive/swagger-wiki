@@ -16,13 +16,6 @@ export default class Update extends Command {
     project: flags.string({
       description: "GitLab project ID",
       env: "CI_PROJECT_ID"
-    }),
-    package: flags.string({
-      description: "Path to npm package.json file",
-      default: path.resolve("./package.json")
-    }),
-    prefix: flags.string({
-      description: "Slug prefix for generated pages"
     })
   };
 
@@ -31,18 +24,6 @@ export default class Update extends Command {
   async run() {
     const { args, flags } = this.parse(Update);
 
-    let prefix;
-
-    if (fs.existsSync(flags.package)) {
-      const content = fs.readFileSync(flags.package, { encoding: "utf-8" });
-      const { version } = JSON.parse(content);
-      prefix = version;
-    }
-
-    if (flags.prefix) {
-      prefix = flags.prefix;
-    }
-
     const api = axios.create({
       baseURL: `https://gitlab.com/api/v4/projects/${flags.project}/`,
       headers: { "Private-Token": flags.token }
@@ -50,8 +31,7 @@ export default class Update extends Command {
 
     await UpdateTasks.run({
       api,
-      rootDir: path.resolve(args.path),
-      prefix
+      rootDir: path.resolve(args.path)
     });
   }
 }
