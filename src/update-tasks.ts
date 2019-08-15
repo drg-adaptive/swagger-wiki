@@ -82,17 +82,14 @@ export const UpdateTasks = new Listr<Context>([
             });
             const data = {
               content,
-              slug: fullSlug
+              slug
             };
 
             if (ctx.existingPages.find(x => x.slug === slug)) {
-              return ctx.api.put(`wikis/${fullSlug}`, data);
+              return ctx.api.put(`wikis/${slug}`, data);
             }
 
-            return ctx.api.post(
-              "wikis",
-              `title=${fullSlug}&content=${content}`
-            );
+            return ctx.api.post("wikis", `title=${slug}&content=${content}`);
           }
         })),
         { concurrent: false }
