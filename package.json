@@ -1,7 +1,7 @@
 {
   "name": "swagger-wiki",
   "description": "A cli to create wiki pages in a project based on swagger files.",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "author": {
     "name": "Ben Force",
     "email": "bforce@teamdrg.com"
