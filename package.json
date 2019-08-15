@@ -2,11 +2,14 @@
   "name": "swagger-wiki",
   "description": "A cli to create wiki pages in a project based on swagger files.",
   "version": "1.0.0",
-  "author": "Ben Force",
+  "author": {
+    "name": "Ben Force",
+    "email": "bforce@teamdrg.com"
+  },
   "bin": {
     "swagger-wiki": "./bin/run"
   },
-  "bugs": "https://gitlab.com/AdaptiveRx/DevOps/swagger-wiki/issues",
+  "bugs": "https://github.com/drg-adaptive/swagger-wiki/issues",
   "dependencies": {
     "@oclif/command": "^1.5.18",
     "@oclif/config": "^1.13.2",
@@ -37,7 +40,7 @@
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
-  "homepage": "https://gitlab.com/AdaptiveRx/DevOps/swagger-wiki",
+  "homepage": "https://github.com/drg-adaptive/swagger-wiki",
   "keywords": [
     "oclif"
   ],
@@ -50,7 +53,7 @@
       "@oclif/plugin-help"
     ]
   },
-  "repository": "https://gitlab.com/AdaptiveRx/DevOps/swagger-wiki",
+  "repository": "https://github.com/drg-adaptive/swagger-wiki",
   "scripts": {
     "postpack": "rm -f oclif.manifest.json",
     "posttest": "tslint -p . -t stylish",
