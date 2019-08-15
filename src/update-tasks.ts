@@ -3,7 +3,7 @@ import * as execa from "execa";
 import * as fs from "fs";
 import * as Listr from "listr";
 import * as path from "path";
-import YAML from "yaml";
+import * as YAML from "yaml";
 
 interface ExistingPage {
   slug: string;
