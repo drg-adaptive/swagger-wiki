@@ -67,10 +67,8 @@ export const UpdateTasks = new Listr<Context>([
   {
     title: "Update pages",
     task(ctx: ContextFull) {
-      ctx.slugs = ctx.files.map(
-        (filename: string) =>
-          (ctx.prefix ? ctx.prefix + "/" : "") +
-          filename.substring(filename.lastIndexOf("/") + 1, filename.length - 5)
+      ctx.slugs = ctx.files.map((filename: string) =>
+        filename.substring(filename.lastIndexOf("/") + 1, filename.length - 5)
       );
 
       return new Listr(
@@ -78,19 +76,23 @@ export const UpdateTasks = new Listr<Context>([
           title: slug,
           async task() {
             const markdownPath = path.join(ctx.rootDir, `${slug}.md`);
+            slug = (ctx.prefix ? ctx.prefix + "/" : "") + slug;
             const content = fs.readFileSync(markdownPath, {
               encoding: "utf-8"
             });
             const data = {
               content,
-              slug
+              slug: fullSlug
             };
 
             if (ctx.existingPages.find(x => x.slug === slug)) {
-              return ctx.api.put(`wikis/${slug}`, data);
+              return ctx.api.put(`wikis/${fullSlug}`, data);
             }
 
-            return ctx.api.post("wikis", `title=${slug}&content=${content}`);
+            return ctx.api.post(
+              "wikis",
+              `title=${fullSlug}&content=${content}`
+            );
           }
         })),
         { concurrent: false }
