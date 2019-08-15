@@ -54,6 +54,18 @@ export const UpdateTasks = new Listr<Context>([
     }
   },
   {
+    title: "Add TOCs",
+    task(ctx: Context) {
+      return execa("./node_modules/.bin/doctoc", [
+        ctx.rootDir,
+        "--gitlab",
+        "--maxlevel",
+        "3",
+        "--notitle"
+      ]);
+    }
+  },
+  {
     title: "Update pages",
     task(ctx: ContextFull) {
       ctx.slugs = ctx.files.map((filename: string) =>
