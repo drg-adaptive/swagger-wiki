@@ -19,7 +19,7 @@ $ npm install -g swagger-wiki
 $ swagger-wiki COMMAND
 running command...
 $ swagger-wiki (-v|--version|version)
-swagger-wiki/1.0.4 darwin-x64 node-v10.16.0
+swagger-wiki/1.0.5 darwin-x64 node-v10.16.0
 $ swagger-wiki --help [COMMAND]
 USAGE
   $ swagger-wiki COMMAND
@@ -61,9 +61,11 @@ ARGUMENTS
 
 OPTIONS
   -h, --help         show CLI help
+  --package=package  [default: /Users/bforce/repos/swagger-wiki/package.json] Path to npm package.json file
+  --prefix=prefix    Slug prefix for generated pages
   --project=project  GitLab project ID
   --token=token      GitLab private token to use
 ```
 
-_See code: [src/commands/update.ts](https://github.com/drg-adaptive/swagger-wiki/blob/v1.0.4/src/commands/update.ts)_
+_See code: [src/commands/update.ts](https://github.com/drg-adaptive/swagger-wiki/blob/v1.0.5/src/commands/update.ts)_
 <!-- commandsstop -->
