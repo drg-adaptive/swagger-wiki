@@ -20,6 +20,9 @@ export default class Update extends Command {
     package: flags.string({
       description: "Path to npm package.json file",
       default: path.resolve("./package.json")
+    }),
+    prefix: flags.string({
+      description: "Slug prefix for generated pages"
     })
   };
 
@@ -34,6 +37,10 @@ export default class Update extends Command {
       const content = fs.readFileSync(flags.package, { encoding: "utf-8" });
       const { version } = JSON.parse(content);
       prefix = version;
+    }
+
+    if (flags.prefix) {
+      prefix = flags.prefix;
     }
 
     const api = axios.create({
