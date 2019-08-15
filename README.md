@@ -19,7 +19,7 @@ $ npm install -g swagger-wiki
 $ swagger-wiki COMMAND
 running command...
 $ swagger-wiki (-v|--version|version)
-swagger-wiki/1.0.0 darwin-x64 node-v10.16.0
+swagger-wiki/1.0.1 darwin-x64 node-v10.16.0
 $ swagger-wiki --help [COMMAND]
 USAGE
   $ swagger-wiki COMMAND
@@ -65,5 +65,5 @@ OPTIONS
   --token=token      GitLab private token to use
 ```
 
-_See code: [src/commands/update.ts](https://gitlab.com/AdaptiveRx/DevOps/swagger-wiki/blob/v1.0.0/src/commands/update.ts)_
+_See code: [src/commands/update.ts](https://github.com/drg-adaptive/swagger-wiki/blob/v1.0.1/src/commands/update.ts)_
 <!-- commandsstop -->
