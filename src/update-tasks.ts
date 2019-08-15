@@ -68,8 +68,13 @@ export const UpdateTasks = new Listr<Context>([
   {
     title: "Update pages",
     task(ctx: ContextFull) {
-      ctx.slugs = ctx.files.map((filename: string) =>
-        filename.substring(filename.lastIndexOf("/") + 1, filename.length - 5)
+      const { version } = require("package.json");
+
+      ctx.slugs = ctx.files.map(
+        (filename: string) =>
+          version +
+          "/" +
+          filename.substring(filename.lastIndexOf("/") + 1, filename.length - 5)
       );
 
       return new Listr(
