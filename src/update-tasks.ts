@@ -83,7 +83,11 @@ export const UpdateTasks = new Listr<Context>([
             let prefix;
 
             try {
-              const { info } = yaml.safeLoad(content);
+              const source = fs.readFileSync(
+                path.join(ctx.rootDir, `${slug}.yaml`),
+                "utf-8"
+              );
+              const { info } = yaml.safeLoad(source);
 
               if (info && info.version) {
                 prefix = info.version;
