@@ -9,16 +9,12 @@ interface ExistingPage {
 }
 interface Context {
   api: AxiosInstance;
-  existingPages?: Array<ExistingPage>;
   rootDir: string;
-  files?: Array<string>;
-  slugs?: Array<string>;
+  prefix?: string;
 }
 
-interface ContextFull {
-  api: AxiosInstance;
+interface ContextFull extends Context {
   existingPages: Array<ExistingPage>;
-  rootDir: string;
   files: Array<string>;
   slugs: Array<string>;
 }
@@ -68,12 +64,9 @@ export const UpdateTasks = new Listr<Context>([
   {
     title: "Update pages",
     task(ctx: ContextFull) {
-      const { version } = require("package.json");
-
       ctx.slugs = ctx.files.map(
         (filename: string) =>
-          version +
-          "/" +
+          (ctx.prefix ? ctx.prefix + "/" : "") +
           filename.substring(filename.lastIndexOf("/") + 1, filename.length - 5)
       );
 

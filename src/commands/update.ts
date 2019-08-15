@@ -1,6 +1,7 @@
 import { Command, flags } from "@oclif/command";
 import axios from "axios";
 import * as path from "path";
+import * as fs from "fs";
 
 require("dotenv").config();
 
@@ -15,6 +16,10 @@ export default class Update extends Command {
     project: flags.string({
       description: "GitLab project ID",
       env: "CI_PROJECT_ID"
+    }),
+    package: flags.string({
+      description: "Path to npm package.json file",
+      default: path.resolve("./package.json")
     })
   };
 
@@ -23,6 +28,14 @@ export default class Update extends Command {
   async run() {
     const { args, flags } = this.parse(Update);
 
+    let prefix;
+
+    if (fs.existsSync(flags.package)) {
+      const content = fs.readFileSync(flags.package, { encoding: "utf-8" });
+      const { version } = JSON.parse(content);
+      prefix = version;
+    }
+
     const api = axios.create({
       baseURL: `https://gitlab.com/api/v4/projects/${flags.project}/`,
       headers: { "Private-Token": flags.token }
@@ -30,7 +43,8 @@ export default class Update extends Command {
 
     await UpdateTasks.run({
       api,
-      rootDir: path.resolve(args.path)
+      rootDir: path.resolve(args.path),
+      prefix
     });
   }
 }
