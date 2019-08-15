@@ -11,6 +11,9 @@ interface Context {
   api: AxiosInstance;
   rootDir: string;
   prefix?: string;
+  existingPages?: Array<ExistingPage>;
+  files?: Array<string>;
+  slugs?: Array<string>;
 }
 
 interface ContextFull extends Context {
