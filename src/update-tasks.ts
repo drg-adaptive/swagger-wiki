@@ -3,6 +3,7 @@ import * as execa from "execa";
 import * as fs from "fs";
 import * as Listr from "listr";
 import * as path from "path";
+import * as yaml from "js-yaml";
 
 interface ExistingPage {
   slug: string;
@@ -70,8 +71,6 @@ export const UpdateTasks = new Listr<Context>([
         filename.substring(filename.lastIndexOf("/") + 1, filename.length - 5)
       );
 
-      const versionRx = /version:\s+([0-9\.]+)s*$/m;
-
       return new Listr(
         ctx.slugs.map(slug => ({
           title: slug,
@@ -83,10 +82,14 @@ export const UpdateTasks = new Listr<Context>([
 
             let prefix;
 
-            const match = content.match(versionRx);
+            try {
+              const { info } = yaml.safeLoad(content);
 
-            if (match) {
-              prefix = match[0][1];
+              if (info && info.version) {
+                prefix = info.version;
+              }
+            } catch (ex) {
+              console.error(ex);
             }
 
             slug = (prefix ? prefix + "/" : "") + slug;
