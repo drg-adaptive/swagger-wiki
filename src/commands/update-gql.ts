@@ -66,7 +66,7 @@ export default class UpdateGql extends Command {
         let prefix;
         try {
           const source = fs.readFileSync(
-            path.join(ctx.rootDir, `package.json`),
+            path.join(process.cwd(), `package.json`),
             "utf-8"
           );
           const { version } = JSON.parse(source);
