@@ -3,12 +3,11 @@ import * as execa from "execa";
 import * as fs from "fs";
 import * as Listr from "listr";
 import * as path from "path";
-import * as yaml from "js-yaml";
 
 interface ExistingPage {
   slug: string;
 }
-interface Context {
+export interface Context {
   api: AxiosInstance;
   rootDir: string;
   existingPages?: Array<ExistingPage>;
@@ -16,101 +15,77 @@ interface Context {
   slugs?: Array<string>;
 }
 
-interface ContextFull extends Context {
+export interface ContextFull extends Context {
   existingPages: Array<ExistingPage>;
   files: Array<string>;
   slugs: Array<string>;
 }
 
-export const UpdateTasks = new Listr<Context>([
-  {
-    title: "Get existing pages",
-    async task(ctx: Context) {
-      const result = await ctx.api.get("wikis");
-      ctx.existingPages = result.data;
-    }
+export const UpdateTasks = (
+  convertSource: {
+    title: string;
+    task(ctx: Context): any;
   },
-  {
-    title: "Convert YAML to MD",
-    task(ctx: Context) {
-      ctx.files = fs
-        .readdirSync(ctx.rootDir)
-        .filter((x: string) => x.toLowerCase().endsWith("yaml"))
-        .map((x: string) => path.join(ctx.rootDir, x));
+  getSlugPrefix: (ctx: Context, slug: string) => string | undefined
+) =>
+  new Listr<Context>([
+    {
+      title: "Get existing pages",
+      async task(ctx: Context) {
+        const result = await ctx.api.get("wikis");
+        ctx.existingPages = result.data;
+      }
+    },
+    convertSource,
+    {
+      title: "Add TOCs",
+      task(ctx: Context) {
+        return execa("./node_modules/.bin/doctoc", [
+          ctx.rootDir,
+          "--gitlab",
+          "--maxlevel",
+          "3",
+          "--notitle"
+        ]);
+      }
+    },
+    {
+      title: "Update pages",
+      task(ctx: ContextFull) {
+        ctx.slugs = ctx.files.map((filename: string) =>
+          filename.substring(filename.lastIndexOf("/") + 1)
+        );
 
-      return new Listr(
-        ctx.files.map((filename: string) => ({
-          title: filename,
-          task: () =>
-            execa("./node_modules/.bin/swagger-markdown", ["-i", filename], {
-              cwd: process.cwd(),
-              shell: false,
-              stdio: "inherit"
-            })
-        })),
-        { concurrent: true }
-      );
-    }
-  },
-  {
-    title: "Add TOCs",
-    task(ctx: Context) {
-      return execa("./node_modules/.bin/doctoc", [
-        ctx.rootDir,
-        "--gitlab",
-        "--maxlevel",
-        "3",
-        "--notitle"
-      ]);
-    }
-  },
-  {
-    title: "Update pages",
-    task(ctx: ContextFull) {
-      ctx.slugs = ctx.files.map((filename: string) =>
-        filename.substring(filename.lastIndexOf("/") + 1, filename.length - 5)
-      );
+        ctx.slugs = ctx.slugs.map((slug: string) =>
+          slug.substring(0, slug.lastIndexOf("."))
+        );
 
-      return new Listr(
-        ctx.slugs.map(slug => ({
-          title: slug,
-          async task() {
-            const markdownPath = path.join(ctx.rootDir, `${slug}.md`);
-            const content = fs.readFileSync(markdownPath, {
-              encoding: "utf-8"
-            });
+        return new Listr(
+          ctx.slugs.map(slug => ({
+            title: slug,
+            async task() {
+              const markdownPath = path.join(ctx.rootDir, `${slug}.md`);
+              const content = fs.readFileSync(markdownPath, {
+                encoding: "utf-8"
+              });
 
-            let prefix;
+              const prefix = getSlugPrefix(ctx, slug);
 
-            try {
-              const source = fs.readFileSync(
-                path.join(ctx.rootDir, `${slug}.yaml`),
-                "utf-8"
-              );
-              const { info } = yaml.safeLoad(source);
+              slug = (prefix ? prefix + "/" : "") + slug;
+              const data = {
+                content,
+                slug
+              };
 
-              if (info && info.version) {
-                prefix = info.version;
+              if (ctx.existingPages.find(x => x.slug === slug)) {
+                return ctx.api.put(`wikis/${slug}`, data);
               }
-            } catch (ex) {
-              console.error(ex);
+
+              return ctx.api.post("wikis", `title=${slug}&content=${content}`);
             }
-
-            slug = (prefix ? prefix + "/" : "") + slug;
-            const data = {
-              content,
-              slug
-            };
-
-            if (ctx.existingPages.find(x => x.slug === slug)) {
-              return ctx.api.put(`wikis/${slug}`, data);
-            }
-
-            return ctx.api.post("wikis", `title=${slug}&content=${content}`);
-          }
-        })),
-        { concurrent: false }
-      );
+          })),
+          { concurrent: false }
+        );
+      }
     }
-  }
-]);
+  ]);

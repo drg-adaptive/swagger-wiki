@@ -1,17 +1,15 @@
 import { Command, flags } from "@oclif/command";
 import axios from "axios";
-import * as execa from "execa";
-import * as fs from "fs";
-import * as yaml from "js-yaml";
-import * as Listr from "listr";
 import * as path from "path";
-
-require("dotenv").config();
-
+import * as Listr from "listr";
+import * as fs from "fs";
+import * as execa from "execa";
 import { UpdateTasks, Context } from "../update-tasks";
 
-export default class Update extends Command {
-  static description = "Generate wiki pages from swagger files";
+const gqlmd = require("graphql-markdown");
+
+export default class UpdateGql extends Command {
+  static description = "Generate wiki pages from graphql files";
 
   static flags = {
     help: flags.help({ char: "h" }),
@@ -22,10 +20,10 @@ export default class Update extends Command {
     })
   };
 
-  static args = [{ name: "path", description: "Path to the swagger files" }];
+  static args = [{ name: "path", description: "Path to the graphql files" }];
 
   async run() {
-    const { args, flags } = this.parse(Update);
+    const { args, flags } = this.parse(UpdateGql);
 
     const api = axios.create({
       baseURL: `https://gitlab.com/api/v4/projects/${flags.project}/`,
@@ -34,26 +32,31 @@ export default class Update extends Command {
 
     const tasks = UpdateTasks(
       {
-        title: "Convert YAML to MD",
+        title: "Convert GraphQL to MD",
         task(ctx: Context) {
           ctx.files = fs
             .readdirSync(ctx.rootDir)
-            .filter((x: string) => x.toLowerCase().endsWith("yaml"))
+            .filter((x: string) => x.toLowerCase().endsWith("graphql"))
             .map((x: string) => path.join(ctx.rootDir, x));
 
           return new Listr(
             ctx.files.map((filename: string) => ({
               title: filename,
-              task: () =>
-                execa(
-                  "./node_modules/.bin/swagger-markdown",
-                  ["-i", filename],
-                  {
-                    cwd: process.cwd(),
-                    shell: false,
-                    stdio: "inherit"
-                  }
-                )
+              async task() {
+                const schema = await gqlmd.loadSchemaJSON(filename);
+
+                const lines: Array<string> = [];
+
+                await gqlmd.renderSchema(schema, {
+                  printer: (line: string) => lines.push(line)
+                });
+
+                fs.writeFileSync(
+                  filename.replace(".graphql", ".md"),
+                  lines.join("\n"),
+                  { encoding: "utf-8" }
+                );
+              }
             })),
             { concurrent: true }
           );
@@ -63,13 +66,13 @@ export default class Update extends Command {
         let prefix;
         try {
           const source = fs.readFileSync(
-            path.join(ctx.rootDir, `${slug}.yaml`),
+            path.join(ctx.rootDir, `package.json`),
             "utf-8"
           );
-          const { info } = yaml.safeLoad(source);
+          const { version } = JSON.parse(source);
 
-          if (info && info.version) {
-            prefix = info.version;
+          if (version) {
+            prefix = version;
           }
         } catch (ex) {
           console.error(ex);

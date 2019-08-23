@@ -1,3 +1,16 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+
+- [swagger-wiki](#swagger-wiki)
+- [Usage](#usage)
+- [Commands](#commands)
+    - [`swagger-wiki help [COMMAND]`](#swagger-wiki-help-command)
+    - [`swagger-wiki update [PATH]`](#swagger-wiki-update-path)
+    - [`swagger-wiki update-gql [PATH]`](#swagger-wiki-update-gql-path)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 swagger-wiki
 ============
 
@@ -30,6 +43,7 @@ USAGE
 <!-- commands -->
 * [`swagger-wiki help [COMMAND]`](#swagger-wiki-help-command)
 * [`swagger-wiki update [PATH]`](#swagger-wiki-update-path)
+* [`swagger-wiki update-gql [PATH]`](#swagger-wiki-update-gql-path)
 
 ## `swagger-wiki help [COMMAND]`
 
@@ -66,4 +80,23 @@ OPTIONS
 ```
 
 _See code: [src/commands/update.ts](https://github.com/drg-adaptive/swagger-wiki/blob/v1.0.12/src/commands/update.ts)_
+
+## `swagger-wiki update-gql [PATH]`
+
+Generate wiki pages from graphql files
+
+```
+USAGE
+  $ swagger-wiki update-gql [PATH]
+
+ARGUMENTS
+  PATH  Path to the graphql files
+
+OPTIONS
+  -h, --help         show CLI help
+  --project=project  GitLab project ID
+  --token=token      GitLab private token to use
+```
+
+_See code: [src/commands/update-gql.ts](https://github.com/drg-adaptive/swagger-wiki/blob/v1.0.12/src/commands/update-gql.ts)_
 <!-- commandsstop -->
