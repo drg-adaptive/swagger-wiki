@@ -18,6 +18,7 @@
     "doctoc": "^1.4.0",
     "dotenv": "^8.0.0",
     "execa": "^2.0.3",
+    "graphql-markdown": "^5.0.1",
     "js-yaml": "^3.13.1",
     "listr": "^0.14.3",
     "tslib": "^1"
@@ -30,6 +31,8 @@
     "@types/listr": "^0.14.2",
     "@types/node": "^10",
     "@types/yaml": "^1.0.2",
+    "commitizen": "^4.0.3",
+    "cz-conventional-changelog": "3.0.2",
     "globby": "^10",
     "ts-node": "^8",
     "tslint": "^5",
@@ -65,7 +68,13 @@
     "test": "echo NO TESTS",
     "version": "oclif-dev readme && git add README.md",
     "build": "echo NO BUILD",
-    "postversion": "git push --follow-tags"
+    "postversion": "git push --follow-tags",
+    "commit": "yarn git-cz"
   },
-  "types": "lib/index.d.ts"
+  "types": "lib/index.d.ts",
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
 }
