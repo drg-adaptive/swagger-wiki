@@ -74,9 +74,10 @@ ARGUMENTS
   PATH  Path to the swagger files
 
 OPTIONS
-  -h, --help         show CLI help
-  --project=project  GitLab project ID
-  --token=token      GitLab private token to use
+  -h, --help               show CLI help
+  -v, --usePackageVersion  Use the version in package.json
+  --project=project        GitLab project ID
+  --token=token            GitLab private token to use
 ```
 
 _See code: [src/commands/update.ts](https://github.com/drg-adaptive/swagger-wiki/blob/v1.0.14/src/commands/update.ts)_

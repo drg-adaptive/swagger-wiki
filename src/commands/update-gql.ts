@@ -79,7 +79,8 @@ export default class UpdateGql extends Command {
         }
 
         return prefix;
-      }
+      },
+      (source: string) => source.replace(".graphql", ".md")
     );
 
     await tasks.run({

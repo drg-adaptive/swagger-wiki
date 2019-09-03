@@ -16,6 +16,10 @@ export default class Update extends Command {
   static flags = {
     help: flags.help({ char: "h" }),
     token: flags.string({ description: "GitLab private token to use" }),
+    usePackageVersion: flags.boolean({
+      description: "Use the version in package.json",
+      char: "v"
+    }),
     project: flags.string({
       description: "GitLab project ID",
       env: "CI_PROJECT_ID"
@@ -44,16 +48,17 @@ export default class Update extends Command {
           return new Listr(
             ctx.files.map((filename: string) => ({
               title: filename,
-              task: () =>
-                execa(
+              task: () => {
+                return execa(
                   "./node_modules/.bin/swagger-markdown",
-                  ["-i", filename],
+                  ["--skip-info", "-i", filename],
                   {
                     cwd: process.cwd(),
                     shell: false,
                     stdio: "inherit"
                   }
-                )
+                );
+              }
             })),
             { concurrent: true }
           );
@@ -62,21 +67,32 @@ export default class Update extends Command {
       (ctx: Context, slug: string) => {
         let prefix;
         try {
-          const source = fs.readFileSync(
-            path.join(ctx.rootDir, `${slug}.yaml`),
-            "utf-8"
-          );
-          const { info } = yaml.safeLoad(source);
+          if (flags.usePackageVersion) {
+            const packageSource = fs.readFileSync(
+              path.resolve("./package.json"),
+              "utf-8"
+            );
 
-          if (info && info.version) {
-            prefix = info.version;
+            const { version } = JSON.parse(packageSource);
+            prefix = version;
+          } else {
+            const source = fs.readFileSync(
+              path.join(ctx.rootDir, `${slug}.yaml`),
+              "utf-8"
+            );
+            const { info } = yaml.safeLoad(source);
+
+            if (info && info.version) {
+              prefix = info.version;
+            }
           }
         } catch (ex) {
           console.error(ex);
         }
 
         return prefix;
-      }
+      },
+      (source: string) => source.replace(".yaml", ".md").replace(".yml", ".md")
     );
 
     await tasks.run({
