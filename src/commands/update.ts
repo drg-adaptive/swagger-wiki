@@ -1,14 +1,19 @@
 import { Command, flags } from "@oclif/command";
 import axios from "axios";
-import * as execa from "execa";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 import * as Listr from "listr";
 import * as path from "path";
+import * as Observable from "zen-observable";
+
+const transformPath = require("swagger-markdown/app/transformers/path");
+const transformSecurityDefinitions = require("swagger-markdown/app/transformers/securityDefinitions");
+const transformExternalDocs = require("swagger-markdown/app/transformers/externalDocs");
+const transformDefinition = require("swagger-markdown/app/transformers/definitions");
 
 require("dotenv").config();
 
-import { UpdateTasks, Context } from "../update-tasks";
+import { Context, UpdateTasks } from "../update-tasks";
 
 export default class Update extends Command {
   static description = "Generate wiki pages from swagger files";
@@ -46,20 +51,116 @@ export default class Update extends Command {
             .map((x: string) => path.join(ctx.rootDir, x));
 
           return new Listr(
-            ctx.files.map((filename: string) => ({
-              title: filename,
-              task: () => {
-                return execa(
-                  "./node_modules/.bin/swagger-markdown",
-                  ["--skip-info", "-i", filename],
-                  {
-                    cwd: process.cwd(),
-                    shell: false,
-                    stdio: "inherit"
-                  }
-                );
-              }
-            })),
+            ctx.files.map(
+              (filename: string) =>
+                ({
+                  title: filename,
+                  task: () =>
+                    new Observable(observer => {
+                      const document = [];
+
+                      const error = (message: string) => {
+                        if (observer && observer.error) {
+                          observer.error(message);
+                        } else {
+                          console.error(message);
+                        }
+                      };
+
+                      const log = (message: string) => {
+                        if (observer && observer.next) {
+                          observer.next(message);
+                        } else {
+                          console.error(message);
+                        }
+                      };
+
+                      try {
+                        log("Reading source");
+                        const inputDoc = yaml.safeLoad(
+                          fs.readFileSync(filename, "utf8")
+                        );
+                        const outputFile = filename.replace(
+                          /(yaml|yml|json)$/i,
+                          "md"
+                        );
+
+                        // Collect parameters
+                        const parameters =
+                          "parameters" in inputDoc ? inputDoc.parameters : {};
+
+                        if ("externalDocs" in inputDoc) {
+                          log("External documents");
+
+                          document.push(
+                            transformExternalDocs(inputDoc.externalDocs)
+                          );
+                        }
+
+                        // Security definitions
+                        if ("securityDefinitions" in inputDoc) {
+                          log("Security definitions");
+                          document.push(
+                            transformSecurityDefinitions(
+                              inputDoc.securityDefinitions
+                            )
+                          );
+                        } else if (
+                          inputDoc.components &&
+                          inputDoc.components.securitySchemas
+                        ) {
+                          log("Security schemas");
+                          document.push(
+                            transformSecurityDefinitions(
+                              inputDoc.components.securityDefinitions
+                            )
+                          );
+                        }
+
+                        // Process Paths
+                        if ("paths" in inputDoc) {
+                          log("Processing paths");
+                          Object.keys(inputDoc.paths).forEach(path =>
+                            document.push(
+                              transformPath(
+                                path,
+                                inputDoc.paths[path],
+                                parameters
+                              )
+                            )
+                          );
+                        }
+
+                        // Models (definitions)
+                        if ("definitions" in inputDoc) {
+                          log("Definitions");
+                          document.push(
+                            transformDefinition(inputDoc.definitions)
+                          );
+                        } else if (
+                          inputDoc.components &&
+                          inputDoc.components.schemas
+                        ) {
+                          log("Schemas");
+                          document.push(
+                            transformDefinition(inputDoc.components.schemas)
+                          );
+                        }
+
+                        log("Saving markdown");
+                        fs.writeFile(outputFile, document.join("\n"), err => {
+                          if (err) {
+                            error(err.message);
+                          }
+                        });
+                      } catch (e) {
+                        error(e.message);
+                      } finally {
+                        observer.complete();
+                      }
+                    })
+                } as any)
+            ),
             { concurrent: true }
           );
         }

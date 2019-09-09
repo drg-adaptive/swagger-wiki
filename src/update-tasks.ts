@@ -3,9 +3,11 @@ import * as execa from "execa";
 import * as fs from "fs";
 import * as Listr from "listr";
 import * as path from "path";
+import * as Observable from "zen-observable";
 
 interface ExistingPage {
   slug: string;
+  title: string;
 }
 export interface Context {
   api: AxiosInstance;
@@ -73,29 +75,65 @@ export const UpdateTasks = (
         return new Listr(
           ctx.slugs.map((slug: SlugEntry) => ({
             title: slug.slug,
-            async task() {
-              const markdownPath = path.join(getMarkdownPath(slug.source));
-              const content = fs.readFileSync(markdownPath, {
-                encoding: "utf-8"
-              });
+            task: () =>
+              new Observable<string>(
+                // @ts-ignore
+                async (
+                  observer: ZenObservable.SubscriptionObserver<string>
+                ) => {
+                  const log = (message: string) => {
+                    if (observer && observer.next) {
+                      observer.next(message);
+                    } else {
+                      console.log(message);
+                    }
+                  };
 
-              const data = {
-                content,
-                slug
-              };
+                  const error = (message: string) => {
+                    if (observer && observer.error) {
+                      observer.error(message);
+                    } else {
+                      console.error(message);
+                    }
+                  };
 
-              if (ctx.existingPages.find(x => x.slug === slug.slug)) {
-                return ctx.api.put(
-                  `wikis/${encodeURIComponent(slug.slug)}`,
-                  data
-                );
-              }
+                  log("Reading source");
+                  const markdownPath = path.join(getMarkdownPath(slug.source));
+                  const content = fs.readFileSync(markdownPath, {
+                    encoding: "utf-8"
+                  });
 
-              return ctx.api.post(
-                "wikis",
-                `title=${slug.slug}&content=${content}`
-              );
-            }
+                  const existingPage = ctx.existingPages.find(
+                    x => x.slug === slug.slug
+                  );
+
+                  try {
+                    if (existingPage) {
+                      log(`Page ${existingPage.slug} already exists`);
+                      const data = {
+                        content,
+                        title: existingPage.title
+                      };
+
+                      const url = `wikis/${encodeURIComponent(
+                        existingPage.slug
+                      )}`;
+
+                      log(`Updating path ${url}`);
+                      await ctx.api.put(url, data);
+                    } else {
+                      await ctx.api.post(
+                        "wikis",
+                        `title=${slug.slug}&content=${content}`
+                      );
+                    }
+                  } catch (ex) {
+                    error(ex.message);
+                  } finally {
+                    observer.complete();
+                  }
+                }
+              )
           })),
           { concurrent: false }
         );
