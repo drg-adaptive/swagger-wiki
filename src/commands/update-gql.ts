@@ -17,6 +17,9 @@ export default class UpdateGql extends Command {
     project: flags.string({
       description: "GitLab project ID",
       env: "CI_PROJECT_ID"
+    }),
+    prefix: flags.string({
+      description: "Hard coded prefix to use"
     })
   };
 
@@ -63,19 +66,22 @@ export default class UpdateGql extends Command {
         }
       },
       (ctx: Context, slug: string) => {
-        let prefix;
-        try {
-          const source = fs.readFileSync(
-            path.join(process.cwd(), `package.json`),
-            "utf-8"
-          );
-          const { version } = JSON.parse(source);
+        let prefix = flags.prefix;
 
-          if (version) {
-            prefix = version;
+        if (!prefix) {
+          try {
+            const source = fs.readFileSync(
+              path.join(process.cwd(), `package.json`),
+              "utf-8"
+            );
+            const { version } = JSON.parse(source);
+
+            if (version) {
+              prefix = version;
+            }
+          } catch (ex) {
+            console.error(ex);
           }
-        } catch (ex) {
-          console.error(ex);
         }
 
         return prefix;

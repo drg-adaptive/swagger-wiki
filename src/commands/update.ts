@@ -28,6 +28,9 @@ export default class Update extends Command {
     project: flags.string({
       description: "GitLab project ID",
       env: "CI_PROJECT_ID"
+    }),
+    prefix: flags.string({
+      description: "Hard coded prefix to use"
     })
   };
 
@@ -166,29 +169,32 @@ export default class Update extends Command {
         }
       },
       (ctx: Context, slug: string) => {
-        let prefix;
-        try {
-          if (flags.usePackageVersion) {
-            const packageSource = fs.readFileSync(
-              path.resolve("./package.json"),
-              "utf-8"
-            );
+        let prefix = flags.prefix;
 
-            const { version } = JSON.parse(packageSource);
-            prefix = version;
-          } else {
-            const source = fs.readFileSync(
-              path.join(ctx.rootDir, `${slug}.yaml`),
-              "utf-8"
-            );
-            const { info } = yaml.safeLoad(source);
+        if (prefix) {
+          try {
+            if (flags.usePackageVersion) {
+              const packageSource = fs.readFileSync(
+                path.resolve("./package.json"),
+                "utf-8"
+              );
 
-            if (info && info.version) {
-              prefix = info.version;
+              const { version } = JSON.parse(packageSource);
+              prefix = version;
+            } else {
+              const source = fs.readFileSync(
+                path.join(ctx.rootDir, `${slug}.yaml`),
+                "utf-8"
+              );
+              const { info } = yaml.safeLoad(source);
+
+              if (info && info.version) {
+                prefix = info.version;
+              }
             }
+          } catch (ex) {
+            console.error(ex);
           }
-        } catch (ex) {
-          console.error(ex);
         }
 
         return prefix;
